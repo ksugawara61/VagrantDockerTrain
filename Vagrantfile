@@ -29,5 +29,6 @@ Vagrant.configure("2") do |config|
     # enable ignition (this is always done on virtualbox as this is how the ssh key is added to the system)
     config.ignition.enabled = true
   end
+  config.vm.provision :shell, path: "bin/setup.sh"
 
 end
