@@ -36,16 +36,16 @@ Vagrant.configure(VAGRANT_API_VERSION) do |config|
   config.vm.provision :shell, path: "bin/setup.sh"
 
   # for leader instance setting
-  config.vm.define :leader001 do |v|
-    ip = "192.168.33.10"
+  config.vm.define :manager001 do |v|
+    ip = "172.16.1.170"
 
     v.vm.network "forwarded_port", guest: 80,  host: 80
     v.vm.network "forwarded_port", guest: 443, host: 443
     v.vm.network "private_network", ip: ip
 
     v.ignition.ip = ip
-    v.ignition.hostname = "leader001"
-    v.ignition.drive_name = "leader001"
+    v.ignition.hostname = "manager001"
+    v.ignition.drive_name = "manager001"
 
     v.vm.provider :virtualbox do |vb|
       vb.memory = $vm_memory
@@ -57,7 +57,7 @@ Vagrant.configure(VAGRANT_API_VERSION) do |config|
   (1..$worker_instance_num).each do |i|
     config.vm.define "worker#{'%03d' % i}" do |v|
       hostname = "worker#{'%03d' % i}"
-      ip = "192.168.33.#{100 + i}"
+      ip = "172.16.1.#{170 + i}"
 
       v.vm.hostname = hostname
       v.vm.network "private_network", ip: ip
