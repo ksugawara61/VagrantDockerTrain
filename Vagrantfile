@@ -10,8 +10,8 @@ $master_vm_memory = 2048
 $master_vm_cpus = 2
 
 $worker_node_num = 1
-$worker_vm_memory = 1024
-$worker_vm_cpus = 1
+$worker_vm_memory = 2048
+$worker_vm_cpus = 2
 
 Vagrant.require_version ">= 1.6.0"
 
