@@ -5,10 +5,13 @@
 VAGRANT_API_VERSION = "2"
 UPDATE_CHANNEL = "alpha"
 
-# setting variables for instance
-$worker_instance_num = 2
-$vm_memory = 1024
-$vm_cpus = 1
+# setting variables for node
+$master_vm_memory = 2048
+$master_vm_cpus = 2
+
+$worker_node_num = 1
+$worker_vm_memory = 1024
+$worker_vm_cpus = 1
 
 Vagrant.require_version ">= 1.6.0"
 
@@ -20,7 +23,6 @@ Vagrant.configure(VAGRANT_API_VERSION) do |config|
   config.ssh.insert_key = false
   config.ssh.forward_agent = true
 
-  #config.vm.box = "centos/7"
   config.vm.box = "coreos-#{UPDATE_CHANNEL}"
   config.vm.box_url = "https://#{UPDATE_CHANNEL}.release.core-os.net/amd64-usr/current/coreos_production_vagrant_virtualbox.json"
 
@@ -35,29 +37,36 @@ Vagrant.configure(VAGRANT_API_VERSION) do |config|
 
   config.vm.provision :shell, path: "bin/setup.sh"
 
-  # for leader instance setting
-  config.vm.define :manager001 do |v|
+  # for master node setting
+  config.vm.define :master001 do |v|
     ip = "172.16.1.170"
+    hostname = "master001"
 
-    v.vm.network "forwarded_port", guest: 80,  host: 80
-    v.vm.network "forwarded_port", guest: 443, host: 443
+    v.vm.network "forwarded_port", guest:8080, host: 8080
+    v.vm.network "forwarded_port", guest:8091, host: 8091
+    v.vm.network "forwarded_port", guest:8443, host: 8443
     v.vm.network "private_network", ip: ip
 
     v.ignition.ip = ip
-    v.ignition.hostname = "manager001"
-    v.ignition.drive_name = "manager001"
+    v.ignition.hostname = hostname
+    v.ignition.drive_name = hostname
 
     v.vm.provider :virtualbox do |vb|
-      vb.memory = $vm_memory
-      vb.cpus = $vm_cpus
+      vb.memory = $master_vm_memory
+      vb.cpus = $master_vm_cpus
     end
+
+    v.vm.provision :shell, run: "always", path: "bin/master/run-rancher.sh"
   end
 
-  # for worker instance setting
-  (1..$worker_instance_num).each do |i|
+  # for worker node setting
+  (1..$worker_node_num).each do |i|
     config.vm.define "worker#{'%03d' % i}" do |v|
       hostname = "worker#{'%03d' % i}"
       ip = "172.16.1.#{170 + i}"
+
+      v.vm.network "forwarded_port", guest: 80,  host: "#{9000 + i}"
+      #v.vm.network "forwarded_port", guest: 443, host: 443
 
       v.vm.hostname = hostname
       v.vm.network "private_network", ip: ip
@@ -67,8 +76,8 @@ Vagrant.configure(VAGRANT_API_VERSION) do |config|
       v.ignition.drive_name = hostname
 
       v.vm.provider :virtualbox do |vb|
-        vb.memory = $vm_memory
-        vb.cpus = $vm_cpus
+        vb.memory = $worker_vm_memory
+        vb.cpus = $worker_vm_cpus
       end
     end
   end
